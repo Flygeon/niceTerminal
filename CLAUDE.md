@@ -40,6 +40,8 @@ PTY read thread (blocking, ConPTY)  →  tokio unbounded channel  →  async emi
 9. **Capabilities** (`src-tauri/capabilities/default.json`) only grant `core:default` + `store:default`. New plugins must add their permissions here.
 10. **Config** is `config.json` via `tauri-plugin-store`, keyed under `settings.*`. File-watch hot reload is a deferred milestone.
 11. **`@xterm/addon-search` 0.15 uses `decorations` (not the old `highlightAll`)** to highlight matches, and it requires `matchOverviewRuler` + `activeMatchColorOverviewRuler` in `#RRGGBB`. Colors are derived from the active theme preset in `useTerminal.ts` (`searchDecorations()`). There is no `Ctrl+F` keydown on a plain keyhandler beyond the terminal's own — it's wired via `attachCustomKeyEventHandler`.
+12. **No WebGL renderer.** `@xterm/addon-webgl` was removed: the search addon's match decorations caused the terminal canvas to render a gray screen while typing in the find box. The default DOM renderer handles decorations reliably. If GPU rendering is wanted later, gate it behind "no active search", don't re-enable unconditionally.
+13. **Window history** (`services/history.ts`): the open tabs (shell + cwd only) are persisted to `window.history` in config and restored on launch (`restoreSessionHistory`). PTY output and session ids are never persisted. Tab changes save debounced (400ms) + flushed on `pagehide`.
 
 ## Design doc
 

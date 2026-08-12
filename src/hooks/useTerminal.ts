@@ -3,7 +3,6 @@ import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { SearchAddon } from "@xterm/addon-search";
 import { WebLinksAddon } from "@xterm/addon-web-links";
-import { WebglAddon } from "@xterm/addon-webgl";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import {
   closeSession,
@@ -78,11 +77,11 @@ export function useTerminal(
     term.open(el);
     fit.fit();
 
-    try {
-      term.loadAddon(new WebglAddon());
-    } catch (err) {
-      console.warn("[terminal] WebGL renderer unavailable, using canvas:", err);
-    }
+    // NOTE: deliberately no WebglAddon. The default DOM renderer handles the
+    // search addon's match decorations reliably; WebGL + decorations had a
+    // rendering glitch that grayed out the terminal while typing in search.
+    // If GPU-accelerated rendering is needed later, gate it behind "no active
+    // search" rather than enabling it unconditionally.
 
     let disposed = false;
 
@@ -128,36 +127,53 @@ export function useTerminal(
       },
       search: (query) => {
         if (disposed) return;
-        if (!query.trim()) {
-          search.clearDecorations();
-          return;
+        try {
+          if (!query.trim()) {
+            search.clearDecorations();
+            return;
+          }
+          search.findNext(query, {
+            incremental: true,
+            decorations: searchDecorations(),
+          });
+        } catch (err) {
+          console.warn("[terminal] search failed:", err);
         }
-        search.findNext(query, {
-          incremental: true,
-          decorations: searchDecorations(),
-        });
       },
       searchNext: (query) => {
         if (disposed) return;
-        if (!query.trim()) {
-          search.clearDecorations();
-          return;
+        try {
+          if (!query.trim()) {
+            search.clearDecorations();
+            return;
+          }
+          search.findNext(query, {
+            incremental: true,
+            decorations: searchDecorations(),
+          });
+        } catch (err) {
+          console.warn("[terminal] searchNext failed:", err);
         }
-        search.findNext(query, {
-          incremental: true,
-          decorations: searchDecorations(),
-        });
       },
       searchPrev: (query) => {
         if (disposed) return;
-        if (!query.trim()) {
-          search.clearDecorations();
-          return;
+        try {
+          if (!query.trim()) {
+            search.clearDecorations();
+            return;
+          }
+          search.findPrevious(query, { decorations: searchDecorations() });
+        } catch (err) {
+          console.warn("[terminal] searchPrev failed:", err);
         }
-        search.findPrevious(query, { decorations: searchDecorations() });
       },
       clearSearch: () => {
-        if (!disposed) search.clearDecorations();
+        if (disposed) return;
+        try {
+          search.clearDecorations();
+        } catch (err) {
+          console.warn("[terminal] clearSearch failed:", err);
+        }
       },
     };
     controllerRef.current = controller;

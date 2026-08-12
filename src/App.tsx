@@ -7,6 +7,7 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { CommandPalette } from "./components/CommandPalette";
 import { openNewTab } from "./actions/tabs";
 import { ensureTerminalEventBridge } from "./services/terminal";
+import { persistWindowHistory, restoreSessionHistory } from "./services/history";
 import { useSessions } from "./stores/sessions";
 import { useSettings } from "./stores/settings";
 import { useUi } from "./stores/ui";
@@ -60,13 +61,32 @@ export default function App() {
       await ensureTerminalEventBridge();
       if (cancelled) return;
       if (useSessions.getState().tabs.length === 0) {
-        await openNewTab();
+        await restoreSessionHistory();
       }
     })().catch((err) => {
       if (!cancelled) setInitError(String(err));
     });
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  // Persist the open tabs (debounced) so the next launch restores them.
+  useEffect(() => {
+    let timer: number | undefined;
+    const unsub = useSessions.subscribe(() => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => void persistWindowHistory(), 400);
+    });
+    const flush = () => {
+      window.clearTimeout(timer);
+      void persistWindowHistory();
+    };
+    window.addEventListener("pagehide", flush);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pagehide", flush);
+      unsub();
     };
   }, []);
 
