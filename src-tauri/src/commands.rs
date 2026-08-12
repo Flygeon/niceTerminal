@@ -4,7 +4,8 @@ use tauri::{AppHandle, State};
 
 use crate::error::AppResult;
 use crate::pty::session::{
-    close_session, list_sessions, resize_session, spawn_session, write_session, NewSessionRequest,
+    close_session as close_session_impl, list_sessions as list_sessions_impl,
+    resize_session as resize_session_impl, spawn_session, write_session, NewSessionRequest,
     SessionInfo,
 };
 use crate::pty::shell::{resolve_shell_path, ShellInfo};
@@ -31,17 +32,17 @@ pub fn resize_session(
     cols: u32,
     rows: u32,
 ) -> AppResult<()> {
-    resize_session(&state, &id, cols, rows)
+    resize_session_impl(&state, &id, cols, rows)
 }
 
 #[tauri::command]
 pub fn close_session(state: State<SessionManager>, id: String) -> AppResult<()> {
-    close_session(&state, &id)
+    close_session_impl(&state, &id)
 }
 
 #[tauri::command]
 pub fn list_sessions(state: State<SessionManager>) -> Vec<SessionInfo> {
-    list_sessions(&state)
+    list_sessions_impl(&state)
 }
 
 #[tauri::command]

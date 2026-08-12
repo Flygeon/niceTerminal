@@ -22,10 +22,11 @@ pub fn resolve_shell_path(override_path: Option<&str>) -> ShellInfo {
         let p = raw.trim().trim_matches('"').to_string();
         if !p.is_empty() {
             let name = shell_name(&p);
+            let args = default_args(&name);
             return ShellInfo {
                 name,
                 path: p,
-                args: default_args(&name),
+                args,
             };
         }
     }

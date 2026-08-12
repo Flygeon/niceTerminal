@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 use tokio::sync::mpsc::unbounded_channel;
 
@@ -31,7 +31,7 @@ pub struct SessionInfo {
     pub started_at: u64,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NewSessionRequest {
     pub cols: u32,
@@ -135,9 +135,8 @@ pub fn write_session(state: &SessionManager, id: &str, data: &str) -> AppResult<
         .get_mut(id)
         .ok_or_else(|| AppError(format!("session not found: {id}")))?;
     let mut guard = session.writer.lock().unwrap();
-    let writer: &mut dyn std::io::Write = &mut *guard;
-    writer.write_all(data.as_bytes()).map_err(AppError::from)?;
-    let _ = writer.flush();
+    guard.write_all(data.as_bytes()).map_err(AppError::from)?;
+    let _ = guard.flush();
     Ok(())
 }
 
@@ -161,8 +160,7 @@ pub fn close_session(state: &SessionManager, id: &str) -> AppResult<()> {
     let mut sessions = state.sessions.lock().unwrap();
     if let Some(session) = sessions.remove(id) {
         let mut guard = session.child.lock().unwrap();
-        let child: &mut dyn portable_pty::Child = &mut *guard;
-        let _ = child.kill();
+        let _ = guard.kill();
     }
     Ok(())
 }
