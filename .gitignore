@@ -1,0 +1,17 @@
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env
+
+# Rust / Tauri build output
+src-tauri/target/
+src-tauri/gen/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

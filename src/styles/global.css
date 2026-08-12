@@ -1,0 +1,557 @@
+/* ============================================================================
+   niceTerminal — global stylesheet (Material Design 3 inspired)
+   Theme colors are injected as CSS custom properties by services/themeService.ts.
+   ========================================================================== */
+
+:root {
+  /* Fallback tokens (Material You · Dark) — overridden at runtime by applyTheme(). */
+  --bg: #141218;
+  --surface: #1d1b20;
+  --surface-container: #211f26;
+  --on-surface: #e6e0e9;
+  --on-surface-variant: #cac4d0;
+  --primary: #d0bcff;
+  --on-primary: #381e72;
+  --primary-container: #4f378b;
+  --on-primary-container: #eaddff;
+  --secondary: #cdbddb;
+  --error: #f2b8b5;
+  --warning: #f9a825;
+  --info: #73c2fb;
+  --border: #2a2730;
+  --selection: #6d5b8b;
+
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "Fira Code", "Consolas",
+    "Courier New", monospace;
+
+  --titlebar-h: 38px;
+  --tabbar-h: 36px;
+  --statusbar-h: 26px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--on-surface);
+  background: var(--bg);
+  user-select: none;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+svg {
+  display: block;
+}
+
+::selection {
+  background: var(--selection);
+}
+
+/* Scrollbars (Chromium/WebView2) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--on-surface-variant) 40%, transparent);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--on-surface-variant) 65%, transparent);
+  background-clip: content-box;
+  border: 2px solid transparent;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ============================================================================
+   App shell
+   ========================================================================== */
+
+.app-shell {
+  display: grid;
+  grid-template-rows: var(--titlebar-h) 1fr var(--statusbar-h);
+  height: 100vh;
+  min-width: 480px;
+  min-height: 300px;
+  background: var(--bg);
+}
+
+.main-area {
+  display: grid;
+  grid-template-rows: var(--tabbar-h) 1fr;
+  min-height: 0;
+}
+
+.terminal-area {
+  position: relative;
+  min-height: 0;
+  background: var(--bg);
+}
+
+.terminal-pane {
+  position: absolute;
+  inset: 0;
+}
+
+.terminal-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 6px 8px;
+}
+
+.terminal-container .xterm {
+  height: 100%;
+}
+
+/* ============================================================================
+   Title bar
+   ========================================================================== */
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag;
+}
+
+.titlebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 12px;
+}
+
+.titlebar-mark {
+  color: var(--primary);
+  font-size: 12px;
+}
+
+.titlebar-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--on-surface-variant);
+}
+
+.titlebar-controls {
+  display: flex;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-btn {
+  width: 46px;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--on-surface-variant);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.titlebar-btn:hover {
+  background: var(--surface-container);
+  color: var(--on-surface);
+}
+
+.titlebar-btn-close:hover {
+  background: #e81123;
+  color: #ffffff;
+}
+
+/* ============================================================================
+   Tab bar
+   ========================================================================== */
+
+.tabbar {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 4px 6px 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabbar::-webkit-scrollbar {
+  display: none;
+}
+
+.tabbar-new {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  margin-right: 4px;
+  border-radius: 6px;
+  color: var(--on-surface-variant);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tabbar-new:hover {
+  background: var(--surface-container);
+  color: var(--on-surface);
+}
+
+.tab {
+  flex: 0 1 200px;
+  min-width: 90px;
+  max-width: 200px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 8px 8px 0 0;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tab:hover {
+  background: color-mix(in srgb, var(--surface-container) 60%, transparent);
+}
+
+.tab-active {
+  background: var(--surface);
+  color: var(--on-surface);
+}
+
+.tab-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.tab-close {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  color: inherit;
+  opacity: 0.6;
+}
+
+.tab-close:hover {
+  background: var(--surface-container);
+  opacity: 1;
+}
+
+.tabbar-empty {
+  align-self: center;
+  padding-left: 8px;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+}
+
+/* ============================================================================
+   Status bar
+   ========================================================================== */
+
+.statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  gap: 16px;
+}
+
+.statusbar-left,
+.statusbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sb-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+.sb-item-shell {
+  color: var(--on-surface);
+}
+
+.sb-item-dim {
+  color: var(--on-surface-variant);
+}
+
+.sb-action {
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--on-surface-variant);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sb-action:hover {
+  background: var(--surface-container);
+  color: var(--on-surface);
+}
+
+/* ============================================================================
+   Empty / error states
+   ========================================================================== */
+
+.empty-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--on-surface-variant);
+}
+
+.empty-new {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 600;
+}
+
+.init-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  color: var(--error);
+}
+
+.init-error span {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  word-break: break-all;
+  max-width: 480px;
+}
+
+.init-error button {
+  margin-top: 8px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+}
+
+/* ============================================================================
+   Settings panel
+   ========================================================================== */
+
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-panel {
+  width: min(560px, calc(100vw - 48px));
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.settings-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--on-surface-variant);
+}
+
+.settings-close:hover {
+  background: var(--surface-container);
+}
+
+.settings-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-section h3 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--on-surface-variant);
+  margin-bottom: 12px;
+}
+
+.settings-row {
+  margin-bottom: 14px;
+}
+
+.settings-row:last-child {
+  margin-bottom: 0;
+}
+
+.settings-label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: var(--on-surface);
+}
+
+.settings-hint {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  margin-top: 6px;
+}
+
+.settings-input,
+.settings-select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-container);
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 13px;
+}
+
+.settings-input:focus,
+.settings-select:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
+}
+
+.settings-select {
+  cursor: pointer;
+}
+
+.theme-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.theme-swatch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-container);
+  font-size: 12px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.theme-swatch:hover {
+  background: color-mix(in srgb, var(--surface-container) 70%, var(--primary) 30%);
+}
+
+.theme-swatch-active {
+  border-color: var(--primary);
+}
+
+.theme-swatch-dots {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+}
+
+.segmented {
+  display: inline-flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.segmented button {
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  background: var(--surface-container);
+}
+
+.segmented button + button {
+  border-left: 1px solid var(--border);
+}
+
+.segmented button:hover {
+  color: var(--on-surface);
+}
+
+.segmented .seg-active {
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+}
+
+.settings-footer {
+  padding: 12px 20px;
+}
+
+.settings-footer .settings-hint {
+  margin: 0;
+}

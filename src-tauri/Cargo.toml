@@ -1,0 +1,28 @@
+[package]
+name = "niceterminal"
+version = "0.1.0"
+description = "niceTerminal — a third-party Windows terminal built on Tauri v2 + xterm.js"
+authors = ["niceTerminal contributors"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "niceterminal_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-store = "2"
+serde = { version = "1", features = ["derive"] }
+portable-pty = "0.9"
+tokio = { version = "1", features = ["sync", "time", "macros"] }
+anyhow = "1"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
