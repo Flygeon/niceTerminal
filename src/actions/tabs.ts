@@ -1,5 +1,6 @@
 import { createSession } from "../services/terminal";
 import { useSessions } from "../stores/sessions";
+import { useSettings } from "../stores/settings";
 
 /**
  * Open a new backend PTY session and register it as a tab. The session is
@@ -8,7 +9,12 @@ import { useSessions } from "../stores/sessions";
  */
 export async function openNewTab(): Promise<void> {
   try {
-    const info = await createSession({ cols: 80, rows: 24 });
+    const settings = useSettings.getState();
+    const info = await createSession({
+      cols: 80,
+      rows: 24,
+      shell: settings.shell || undefined,
+    });
     useSessions.getState().addTab({
       sessionId: info.id,
       title: info.shell,

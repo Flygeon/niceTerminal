@@ -1,115 +1,153 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import "@xterm/xterm/css/xterm.css";
+import { useEffect, useRef, useState } from "react";
+import { useTerminal } from "../hooks/useTerminal";
 import type { Tab } from "../stores/sessions";
-import { useTerminal, type TerminalController } from "../hooks/useTerminal";
 
-/**
- * A single tab's terminal plus the §7.5 quick-action toolbar (copy / paste /
- * find / clear / interrupt, hideable) and the in-terminal search bar (Ctrl+F).
- * Everything is per-pane so hidden tabs keep their own toolbar/search state.
- */
-export function TerminalView({ tab }: { tab: Tab }) {
+interface TerminalViewProps {
+  tab: Tab;
+}
+
+export function TerminalView({ tab }: TerminalViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [toolbarOpen, setToolbarOpen] = useState(true);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const controller = useTerminal(
+    containerRef,
+    tab.id,
+    tab.sessionId,
+    () => setSearchVisible(true),
+  );
 
-  const controllerRef = useTerminal(containerRef, tab.id, tab.sessionId, () => {
-    setSearchOpen(true);
-    requestAnimationFrame(() => searchInputRef.current?.focus());
-  });
+  const [toolbarExpanded, setToolbarExpanded] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    containerRef.current?.querySelector("textarea")?.focus();
-  }, []);
+    if (searchVisible && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchVisible]);
 
-  const ctrl = (): TerminalController | null => controllerRef.current;
+  useEffect(() => {
+    if (!controller.current || !searchVisible) return;
+    if (searchQuery.trim()) {
+      controller.current.search(searchQuery);
+    } else {
+      controller.current.clearSearch();
+    }
+  }, [controller, searchQuery, searchVisible]);
 
-  const openSearch = () => {
-    setSearchOpen(true);
-    requestAnimationFrame(() => searchInputRef.current?.focus());
+  const handleSearchNext = () => {
+    if (controller.current && searchQuery.trim()) {
+      controller.current.searchNext(searchQuery);
+    }
   };
 
-  const closeSearch = () => {
-    setSearchOpen(false);
-    setQuery("");
-    ctrl()?.clearSearch();
+  const handleSearchPrev = () => {
+    if (controller.current && searchQuery.trim()) {
+      controller.current.searchPrev(searchQuery);
+    }
   };
 
-  const handleSearchKey = (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleSearchClose = () => {
+    setSearchVisible(false);
+    setSearchQuery("");
+    controller.current?.clearSearch();
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      if (e.shiftKey) ctrl()?.searchPrev(query);
-      else ctrl()?.searchNext(query);
+      if (e.shiftKey) {
+        handleSearchPrev();
+      } else {
+        handleSearchNext();
+      }
     } else if (e.key === "Escape") {
-      closeSearch();
+      e.preventDefault();
+      handleSearchClose();
     }
+  };
+
+  const handleCopy = () => {
+    controller.current?.copy();
+  };
+
+  const handlePaste = () => {
+    controller.current?.paste();
+  };
+
+  const handleClear = () => {
+    controller.current?.clear();
+  };
+
+  const handleInterrupt = () => {
+    controller.current?.interrupt();
+  };
+
+  const handleSearchClick = () => {
+    setSearchVisible(true);
   };
 
   return (
     <div className="terminal-view">
       <div className="terminal-container" ref={containerRef} />
 
-      {searchOpen && (
-        <div className="terminal-search">
-          <input
-            ref={searchInputRef}
-            value={query}
-            placeholder="查找…  ⏎ 下一个 · ⇧⏎ 上一个 · Esc 关闭"
-            spellCheck={false}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              if (e.target.value) ctrl()?.searchNext(e.target.value);
-              else ctrl()?.clearSearch();
-            }}
-            onKeyDown={handleSearchKey}
-          />
-          <button
-            title="上一个 (Shift+Enter)"
-            onClick={() => ctrl()?.searchPrev(query)}
-          >
-            ▲
-          </button>
-          <button title="下一个 (Enter)" onClick={() => ctrl()?.searchNext(query)}>
-            ▼
-          </button>
-          <button className="terminal-search-close" title="关闭 (Esc)" onClick={closeSearch}>
-            ✕
-          </button>
-        </div>
-      )}
-
-      {toolbarOpen ? (
+      {toolbarExpanded ? (
         <div className="terminal-toolbar">
-          <button title="复制 (Ctrl+Shift+C)" onClick={() => ctrl()?.copy()}>
+          <button onClick={handleCopy} title="复制 (Ctrl+Shift+C)">
             📋
           </button>
-          <button title="粘贴 (Ctrl+V)" onClick={() => ctrl()?.paste()}>
+          <button onClick={handlePaste} title="粘贴 (Ctrl+V)">
             📥
           </button>
-          <button title="查找 (Ctrl+F)" onClick={openSearch}>
+          <div className="toolbar-sep" />
+          <button onClick={handleSearchClick} title="查找 (Ctrl+F)">
             🔍
           </button>
-          <button title="清屏" onClick={() => ctrl()?.clear()}>
+          <button onClick={handleClear} title="清屏">
             🗑️
           </button>
-          <button title="中断当前命令 (Ctrl+C)" onClick={() => ctrl()?.interrupt()}>
+          <button onClick={handleInterrupt} title="中断 (Ctrl+C)">
             ⏹
           </button>
-          <span className="toolbar-sep" />
-          <button title="隐藏工具栏" onClick={() => setToolbarOpen(false)}>
-            ≫
+          <div className="toolbar-sep" />
+          <button onClick={() => setToolbarExpanded(false)} title="收起">
+            ⋯
           </button>
         </div>
       ) : (
         <button
           className="terminal-toolbar-min"
-          title="显示工具栏"
-          onClick={() => setToolbarOpen(true)}
+          onClick={() => setToolbarExpanded(true)}
+          title="展开工具栏"
         >
           ⋯
         </button>
+      )}
+
+      {searchVisible && (
+        <div className="terminal-search">
+          <input
+            ref={searchInputRef}
+            type="text"
+            placeholder="查找..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
+          />
+          <button onClick={handleSearchPrev} title="上一个 (Shift+Enter)">
+            ▲
+          </button>
+          <button onClick={handleSearchNext} title="下一个 (Enter)">
+            ▼
+          </button>
+          <button
+            className="terminal-search-close"
+            onClick={handleSearchClose}
+            title="关闭 (Esc)"
+          >
+            ×
+          </button>
+        </div>
       )}
     </div>
   );

@@ -9,19 +9,16 @@ const CONFIG_PREFIX = "settings";
 
 interface SettingsState {
   initialized: boolean;
-  themeName: string;
+  theme: string;
   mode: ThemeMode;
   fontFamily: string;
   fontSize: number;
-  statusBarMode: StatusBarMode;
-  shellOverride: string;
+  lineHeight: number;
+  cursorStyle: "block" | "underline" | "bar";
+  cursorBlink: boolean;
+  shell: string;
   init: () => Promise<void>;
-  setThemeName: (name: string) => void;
-  setMode: (mode: ThemeMode) => void;
-  setFontFamily: (family: string) => void;
-  setFontSize: (size: number) => void;
-  setStatusBarMode: (mode: StatusBarMode) => void;
-  setShellOverride: (shell: string) => void;
+  update: (partial: Partial<Omit<SettingsState, "initialized" | "init" | "update">>) => Promise<void>;
 }
 
 async function persist<T>(key: string, value: T): Promise<void> {
@@ -30,65 +27,59 @@ async function persist<T>(key: string, value: T): Promise<void> {
 
 export const useSettings = create<SettingsState>((set, get) => ({
   initialized: false,
-  themeName: "material",
+  theme: "material",
   mode: "dark",
-  fontFamily: "JetBrains Mono",
+  fontFamily: "JetBrains Mono, Consolas, monospace",
   fontSize: 14,
-  statusBarMode: "full",
-  shellOverride: "",
+  lineHeight: 1.2,
+  cursorStyle: "block",
+  cursorBlink: true,
+  shell: "",
 
   init: async () => {
-    const [themeName, mode, fontFamily, fontSize, statusBarMode, shellOverride] =
+    const [theme, mode, fontFamily, fontSize, lineHeight, cursorStyle, cursorBlink, shell] =
       await Promise.all([
-        getConfig("settings.themeName", "material"),
+        getConfig("settings.theme", "material"),
         getConfig<ThemeMode>("settings.mode", "dark"),
-        getConfig("settings.fontFamily", "JetBrains Mono"),
+        getConfig("settings.fontFamily", "JetBrains Mono, Consolas, monospace"),
         getConfig("settings.fontSize", 14),
-        getConfig<StatusBarMode>("settings.statusBarMode", "full"),
-        getConfig("settings.shellOverride", ""),
+        getConfig("settings.lineHeight", 1.2),
+        getConfig<"block" | "underline" | "bar">("settings.cursorStyle", "block"),
+        getConfig("settings.cursorBlink", true),
+        getConfig("settings.shell", ""),
       ]);
     set({
-      themeName,
+      theme,
       mode,
       fontFamily,
       fontSize,
-      statusBarMode,
-      shellOverride,
+      lineHeight,
+      cursorStyle,
+      cursorBlink,
+      shell,
       initialized: true,
     });
-    applyTheme(get().themeName, get().mode);
+    document.documentElement.setAttribute("data-mode", mode);
+    applyTheme(theme, mode);
   },
 
-  setThemeName: (themeName) => {
-    set({ themeName });
-    void persist("themeName", themeName);
-    applyTheme(get().themeName, get().mode);
-  },
+  update: async (partial) => {
+    const updated = { ...get(), ...partial };
+    set(partial);
 
-  setMode: (mode) => {
-    set({ mode });
-    void persist("mode", mode);
-    applyTheme(get().themeName, mode);
-  },
+    // Persist each changed key
+    for (const [key, value] of Object.entries(partial)) {
+      await persist(key, value);
+    }
 
-  setFontFamily: (fontFamily) => {
-    set({ fontFamily });
-    void persist("fontFamily", fontFamily);
-  },
+    // Update data-mode attribute if mode changed
+    if (partial.mode !== undefined) {
+      document.documentElement.setAttribute("data-mode", partial.mode);
+    }
 
-  setFontSize: (fontSize) => {
-    const clamped = Math.min(28, Math.max(10, fontSize));
-    set({ fontSize: clamped });
-    void persist("fontSize", clamped);
-  },
-
-  setStatusBarMode: (statusBarMode) => {
-    set({ statusBarMode });
-    void persist("statusBarMode", statusBarMode);
-  },
-
-  setShellOverride: (shellOverride) => {
-    set({ shellOverride });
-    void persist("shellOverride", shellOverride);
+    // Re-apply theme if theme or mode changed
+    if (partial.theme !== undefined || partial.mode !== undefined) {
+      applyTheme(updated.theme, updated.mode);
+    }
   },
 }));

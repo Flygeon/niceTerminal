@@ -1890,10 +1890,8 @@ name = "niceterminal"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "log",
  "portable-pty",
  "serde",
- "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-store",

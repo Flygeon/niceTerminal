@@ -16,10 +16,13 @@ import { useSettings } from "../stores/settings";
 
 /** Actions the surrounding UI can invoke on a live terminal instance. */
 export interface TerminalController {
+  term: Terminal;
+  fit: () => void;
   copy: () => void;
   paste: () => void;
   clear: () => void;
   interrupt: () => void;
+  search: (query: string) => void;
   searchNext: (query: string) => void;
   searchPrev: (query: string) => void;
   clearSearch: () => void;
@@ -51,8 +54,10 @@ export function useTerminal(
       scrollback: 10000,
       fontFamily: settings.fontFamily,
       fontSize: settings.fontSize,
-      theme: getXtermTheme(settings.themeName, settings.mode),
-      cursorBlink: true,
+      lineHeight: settings.lineHeight,
+      theme: getXtermTheme(settings.theme, settings.mode),
+      cursorStyle: settings.cursorStyle,
+      cursorBlink: settings.cursorBlink,
       convertEol: false,
       allowTransparency: false,
       drawBoldTextInBrightColors: true,
@@ -83,7 +88,7 @@ export function useTerminal(
       activeMatchColorOverviewRuler: string;
     } => {
       const s = useSettings.getState();
-      const colors = getTheme(s.themeName, s.mode).colors;
+      const colors = getTheme(s.theme, s.mode).colors;
       return {
         matchBackground: colors.selection,
         matchBorder: colors.selection,
@@ -95,6 +100,8 @@ export function useTerminal(
     };
 
     const controller: TerminalController = {
+      term,
+      fit: () => fit.fit(),
       copy: () => {
         const selection = term.getSelection();
         if (selection) void navigator.clipboard.writeText(selection);
@@ -109,7 +116,18 @@ export function useTerminal(
       },
       clear: () => term.clear(),
       interrupt: () => {
-        if (!disposed) void writeToSession(sessionId, "");
+        if (!disposed) void writeToSession(sessionId, "\x03");
+      },
+      search: (query) => {
+        if (disposed) return;
+        if (!query.trim()) {
+          search.clearDecorations();
+          return;
+        }
+        search.findNext(query, {
+          incremental: true,
+          decorations: searchDecorations(),
+        });
       },
       searchNext: (query) => {
         if (disposed) return;
@@ -196,8 +214,14 @@ export function useTerminal(
         term.options.fontSize = state.fontSize;
         needsFit = true;
       }
-      if (state.themeName !== prev.themeName || state.mode !== prev.mode) {
-        term.options.theme = getXtermTheme(state.themeName, state.mode);
+      if (state.theme !== prev.theme || state.mode !== prev.mode) {
+        term.options.theme = getXtermTheme(state.theme, state.mode);
+      }
+      if (state.cursorStyle !== prev.cursorStyle) {
+        term.options.cursorStyle = state.cursorStyle;
+      }
+      if (state.cursorBlink !== prev.cursorBlink) {
+        term.options.cursorBlink = state.cursorBlink;
       }
       if (needsFit) {
         fit.fit();

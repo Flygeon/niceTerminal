@@ -1,60 +1,38 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
-/**
- * Custom title bar. Window decorations are disabled in tauri.conf.json
- * (decorations: false), so the app draws its own. The `data-tauri-drag-region`
- * attribute makes the window draggable; the controls call the Tauri window API.
- */
-export function TitleBar() {
-  const appWindow = getCurrentWindow();
+const appWindow = getCurrentWindow();
 
+export function TitleBar() {
   return (
-    <header className="titlebar" data-tauri-drag-region>
-      <div className="titlebar-brand" data-tauri-drag-region>
-        <span className="titlebar-mark">▮</span>
-        <span className="titlebar-title">niceTerminal</span>
+    <div className="title-bar" data-tauri-drag-region>
+      <div className="title-bar-left" data-tauri-drag-region>
+        <div className="title-bar-logo">▣</div>
+        <span className="title-bar-title">niceTerminal</span>
       </div>
-      <div className="titlebar-controls">
+      <div className="title-bar-center" data-tauri-drag-region />
+      <div className="title-bar-actions">
         <button
-          className="titlebar-btn"
-          aria-label="Minimize"
-          title="Minimize"
+          className="title-bar-btn minimize"
           onClick={() => void appWindow.minimize()}
+          aria-label="最小化"
         >
-          <svg width="10" height="10" viewBox="0 0 10 10">
-            <line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" strokeWidth="1" />
-          </svg>
+          ―
         </button>
         <button
-          className="titlebar-btn"
-          aria-label="Maximize"
-          title="Maximize"
+          className="title-bar-btn maximize"
           onClick={() => void appWindow.toggleMaximize()}
+          aria-label="最大化"
         >
-          <svg width="10" height="10" viewBox="0 0 10 10">
-            <rect
-              x="0.5"
-              y="0.5"
-              width="9"
-              height="9"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1"
-            />
-          </svg>
+          ☐
         </button>
         <button
-          className="titlebar-btn titlebar-btn-close"
-          aria-label="Close"
-          title="Close"
+          className="title-bar-btn close"
           onClick={() => void appWindow.close()}
+          aria-label="关闭"
         >
-          <svg width="10" height="10" viewBox="0 0 10 10">
-            <line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" strokeWidth="1.2" />
-            <line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" strokeWidth="1.2" />
-          </svg>
+          ×
         </button>
       </div>
-    </header>
+    </div>
   );
 }

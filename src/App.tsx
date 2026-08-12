@@ -67,40 +67,37 @@ export default function App() {
   const activeId = useSessions((s) => s.activeId);
 
   return (
-    <div className="app-shell">
+    <div className="app">
       <TitleBar />
-      <div className="main-area">
-        <TabBar />
-        <div className="terminal-area">
-          {initError && (
-            <div className="init-error">
-              <strong>启动失败</strong>
-              <span>{initError}</span>
-              <button onClick={() => setShowSettings(true)}>打开设置</button>
+      <TabBar />
+      <div className="main">
+        {initError && (
+          <div className="init-error">
+            <strong>启动失败</strong>
+            <span>{initError}</span>
+            <button onClick={() => setShowSettings(true)}>打开设置</button>
+          </div>
+        )}
+        {!initError &&
+          (tabs.length === 0 ? (
+            <div className="empty-state">
+              <p>没有活动会话</p>
+              <button className="empty-new" onClick={() => void openNewTab()}>
+                + 新建标签页
+              </button>
             </div>
-          )}
-          {!initError &&
-            (tabs.length === 0 ? (
-              <div className="empty-state">
-                <p>没有活动会话</p>
-                <button className="empty-new" onClick={() => void openNewTab()}>
-                  + 新建标签页
-                </button>
-              </div>
-            ) : (
-              tabs.map((tab) => (
+          ) : (
+            <div className="panes">
+              {tabs.map((tab) => (
                 <div
                   key={tab.id}
-                  className="terminal-pane"
-                  style={{
-                    visibility: tab.id === activeId ? "visible" : "hidden",
-                  }}
+                  className={`terminal-pane ${tab.id === activeId ? "active" : ""}`}
                 >
                   <TerminalView tab={tab} />
                 </div>
-              ))
-            ))}
-        </div>
+              ))}
+            </div>
+          ))}
       </div>
       <StatusBar onOpenSettings={() => setShowSettings(true)} />
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}

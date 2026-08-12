@@ -1,177 +1,190 @@
-import { PRESETS, PRESET_NAMES } from "../services/themeService";
-import {
-  useSettings,
-  type StatusBarMode,
-  type ThemeMode,
-} from "../stores/settings";
+import { useSettings } from "../stores/settings";
 
-const FONT_FAMILIES = [
-  "JetBrains Mono",
-  "Cascadia Code",
-  "Consolas",
-  "Fira Code",
-  "Courier New",
-];
+interface SettingsPanelProps {
+  onClose: () => void;
+}
 
-const STATUS_BAR_MODES: { value: StatusBarMode; label: string; desc: string }[] =
-  [
-    { value: "full", label: "完整模式", desc: "cwd · shell · git · theme" },
-    { value: "simple", label: "简洁模式", desc: "cwd · shell · theme" },
-    { value: "minimal", label: "极简模式", desc: "shell · theme" },
-  ];
-
-export function SettingsPanel({ onClose }: { onClose: () => void }) {
+export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const settings = useSettings();
 
-  const setMode = (mode: ThemeMode) => settings.setMode(mode);
+  const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    void settings.update({ theme: e.target.value });
+  };
+
+  const handleModeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    void settings.update({ mode: e.target.value as "light" | "dark" });
+  };
+
+  const handleFontSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    if (!isNaN(value) && value >= 8 && value <= 32) {
+      void settings.update({ fontSize: value });
+    }
+  };
+
+  const handleFontFamilyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    void settings.update({ fontFamily: e.target.value });
+  };
+
+  const handleLineHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    if (!isNaN(value) && value >= 1.0 && value <= 2.5) {
+      void settings.update({ lineHeight: value });
+    }
+  };
+
+  const handleCursorStyleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    void settings.update({ cursorStyle: e.target.value as "block" | "underline" | "bar" });
+  };
+
+  const handleCursorBlinkChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    void settings.update({ cursorBlink: e.target.value === "true" });
+  };
+
+  const handleShellChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    void settings.update({ shell: e.target.value });
+  };
 
   return (
-    <div className="settings-backdrop" onClick={onClose}>
-      <div
-        className="settings-panel"
-        role="dialog"
-        aria-label="Settings"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="settings-header">
-          <h2>设置</h2>
-          <button className="settings-close" onClick={onClose} aria-label="Close">
-            ✕
+    <div className="settings-overlay" onClick={onClose}>
+      <div className="settings-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="settings-header">
+          <h2 className="settings-title">设置</h2>
+          <button className="settings-close" onClick={onClose} aria-label="关闭">
+            ×
           </button>
-        </header>
+        </div>
 
-        <section className="settings-section">
-          <h3>外观 · Appearance</h3>
-
-          <div className="settings-row">
-            <label className="settings-label">主题预设</label>
-            <div className="theme-swatches">
-              {PRESET_NAMES.map((name) => {
-                const def = PRESETS[name];
-                const active = settings.themeName === name;
-                const colors = settings.mode === "dark" ? def.dark : def.light;
-                return (
-                  <button
-                    key={name}
-                    className={`theme-swatch ${active ? "theme-swatch-active" : ""}`}
-                    title={def.label}
-                    onClick={() => settings.setThemeName(name)}
-                  >
-                    <span
-                      className="theme-swatch-dots"
-                      style={{
-                        background: colors.colors.primary,
-                        borderColor: colors.colors.onSurface,
-                      }}
-                    />
-                    {def.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="settings-row">
-            <label className="settings-label">明暗模式</label>
-            <div className="segmented">
-              <button
-                className={settings.mode === "light" ? "seg-active" : ""}
-                onClick={() => setMode("light")}
-              >
-                浅色
-              </button>
-              <button
-                className={settings.mode === "dark" ? "seg-active" : ""}
-                onClick={() => setMode("dark")}
-              >
-                深色
-              </button>
-            </div>
-          </div>
-
-          <div className="settings-row">
-            <label className="settings-label" htmlFor="font-size">
-              字号 {settings.fontSize}px
-            </label>
-            <input
-              id="font-size"
-              type="range"
-              min={10}
-              max={28}
-              step={1}
-              value={settings.fontSize}
-              onChange={(e) => settings.setFontSize(Number(e.target.value))}
-            />
-          </div>
-
-          <div className="settings-row">
-            <label className="settings-label" htmlFor="font-family">
-              字体
-            </label>
-            <select
-              id="font-family"
-              className="settings-select"
-              value={settings.fontFamily}
-              onChange={(e) => settings.setFontFamily(e.target.value)}
-            >
-              {FONT_FAMILIES.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
-          </div>
-        </section>
-
-        <section className="settings-section">
-          <h3>状态栏 · Status Bar</h3>
-          <div className="settings-row">
-            <label className="settings-label">信息密度</label>
-            <div className="segmented">
-              {STATUS_BAR_MODES.map((m) => (
-                <button
-                  key={m.value}
-                  className={settings.statusBarMode === m.value ? "seg-active" : ""}
-                  onClick={() => settings.setStatusBarMode(m.value)}
+        <div className="settings-content">
+          {/* 外观 */}
+          <div className="settings-group">
+            <h3 className="settings-group-title">外观</h3>
+            <div className="settings-row">
+              <label className="settings-label">主题</label>
+              <div className="settings-control">
+                <select
+                  className="settings-select"
+                  value={settings.theme}
+                  onChange={handleThemeChange}
                 >
-                  {m.label}
-                </button>
-              ))}
+                  <option value="material">Material You</option>
+                  <option value="gruvbox">Gruvbox</option>
+                  <option value="dracula">Dracula</option>
+                  <option value="nord">Nord</option>
+                  <option value="solarized">Solarized</option>
+                </select>
+              </div>
             </div>
-            <p className="settings-hint">
-              {
-                STATUS_BAR_MODES.find((m) => m.value === settings.statusBarMode)
-                  ?.desc
-              }
-            </p>
+            <div className="settings-row">
+              <label className="settings-label">明暗模式</label>
+              <div className="settings-control">
+                <select
+                  className="settings-select"
+                  value={settings.mode}
+                  onChange={handleModeChange}
+                >
+                  <option value="dark">深色</option>
+                  <option value="light">浅色</option>
+                </select>
+              </div>
+            </div>
           </div>
-        </section>
 
-        <section className="settings-section">
-          <h3>Shell</h3>
-          <div className="settings-row">
-            <label className="settings-label" htmlFor="shell-override">
-              默认 Shell 路径
-            </label>
-            <input
-              id="shell-override"
-              type="text"
-              className="settings-input"
-              placeholder="留空自动检测 (pwsh → powershell → cmd)"
-              value={settings.shellOverride}
-              onChange={(e) => settings.setShellOverride(e.target.value)}
-            />
-            <p className="settings-hint">
-              例如 C:\Program Files\PowerShell\7\pwsh.exe。修改后新建的标签页生效。
-            </p>
+          {/* 字体 */}
+          <div className="settings-group">
+            <h3 className="settings-group-title">字体</h3>
+            <div className="settings-row">
+              <label className="settings-label">字体族</label>
+              <div className="settings-control">
+                <input
+                  type="text"
+                  className="settings-select"
+                  style={{ width: "240px" }}
+                  value={settings.fontFamily}
+                  onChange={handleFontFamilyChange}
+                  placeholder="JetBrains Mono, Consolas"
+                />
+              </div>
+            </div>
+            <div className="settings-row">
+              <label className="settings-label">字号</label>
+              <div className="settings-control">
+                <input
+                  type="number"
+                  className="settings-number"
+                  min="8"
+                  max="32"
+                  value={settings.fontSize}
+                  onChange={handleFontSizeChange}
+                />
+              </div>
+            </div>
+            <div className="settings-row">
+              <label className="settings-label">行高</label>
+              <div className="settings-control">
+                <input
+                  type="number"
+                  className="settings-number"
+                  min="1.0"
+                  max="2.5"
+                  step="0.1"
+                  value={settings.lineHeight}
+                  onChange={handleLineHeightChange}
+                />
+              </div>
+            </div>
           </div>
-        </section>
 
-        <footer className="settings-footer">
-          <span className="settings-hint">
-            配置文件：config.json（tauri-plugin-store），改动即时生效。
-          </span>
-        </footer>
+          {/* 光标 */}
+          <div className="settings-group">
+            <h3 className="settings-group-title">光标</h3>
+            <div className="settings-row">
+              <label className="settings-label">光标样式</label>
+              <div className="settings-control">
+                <select
+                  className="settings-select"
+                  value={settings.cursorStyle}
+                  onChange={handleCursorStyleChange}
+                >
+                  <option value="block">方块</option>
+                  <option value="underline">下划线</option>
+                  <option value="bar">竖线</option>
+                </select>
+              </div>
+            </div>
+            <div className="settings-row">
+              <label className="settings-label">光标闪烁</label>
+              <div className="settings-control">
+                <select
+                  className="settings-select"
+                  value={settings.cursorBlink.toString()}
+                  onChange={handleCursorBlinkChange}
+                >
+                  <option value="true">开启</option>
+                  <option value="false">关闭</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Shell */}
+          <div className="settings-group">
+            <h3 className="settings-group-title">Shell</h3>
+            <div className="settings-row">
+              <label className="settings-label">默认 Shell</label>
+              <div className="settings-control">
+                <input
+                  type="text"
+                  className="settings-select"
+                  style={{ width: "240px" }}
+                  value={settings.shell}
+                  onChange={handleShellChange}
+                  placeholder="留空使用系统默认"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
