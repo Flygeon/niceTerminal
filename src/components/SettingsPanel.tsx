@@ -51,7 +51,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
         <div className="settings-header">
           <h2 className="settings-title">设置</h2>
           <button className="settings-close" onClick={onClose} aria-label="关闭">
-            ×
+            <span className="material-symbols-rounded">close</span>
           </button>
         </div>
 

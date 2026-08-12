@@ -1,5 +1,6 @@
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import "material-symbols/rounded.css";
 import "./styles/md3-tokens.css";
 import "./styles/global.css";
 

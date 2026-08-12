@@ -8,10 +8,12 @@ export function TabBar() {
   const closeTab = useSessions((s) => s.closeTab);
 
   return (
-    <div className="tab-bar">
+    <div className="tab-bar" role="tablist">
       {tabs.map((tab) => (
-        <button
+        <div
           key={tab.id}
+          role="tab"
+          aria-selected={tab.id === activeId}
           className={`tab ${tab.id === activeId ? "active" : ""}`}
           onClick={() => activate(tab.id)}
         >
@@ -24,16 +26,16 @@ export function TabBar() {
             }}
             aria-label="关闭标签页"
           >
-            ×
+            <span className="material-symbols-rounded ms-16">close</span>
           </button>
-        </button>
+        </div>
       ))}
       <button
         className="tab-new"
         onClick={() => void openNewTab()}
         aria-label="新建标签页"
       >
-        +
+        <span className="material-symbols-rounded">add</span>
       </button>
     </div>
   );

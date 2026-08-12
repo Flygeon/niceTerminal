@@ -13,12 +13,16 @@ export function StatusBar({ onOpenSettings }: StatusBarProps) {
     <div className="status-bar">
       <div className="status-left">
         <div className="status-item">
-          <span className="status-icon">💻</span>
+          <span className="status-icon">
+            <span className="material-symbols-rounded ms-14">terminal</span>
+          </span>
           <span>{activeTab?.title || "无活动会话"}</span>
         </div>
         {activeTab && activeTab.cwd && (
           <div className="status-item">
-            <span className="status-icon">📁</span>
+            <span className="status-icon">
+              <span className="material-symbols-rounded ms-14">folder</span>
+            </span>
             <span title={activeTab.cwd}>
               {activeTab.cwd.length > 40
                 ? "..." + activeTab.cwd.slice(-37)
@@ -32,7 +36,8 @@ export function StatusBar({ onOpenSettings }: StatusBarProps) {
           <span>{tabs.length} 个标签页</span>
         </div>
         <button className="status-btn" onClick={onOpenSettings}>
-          ⚙️ 设置
+          <span className="material-symbols-rounded ms-16">settings</span>
+          设置
         </button>
       </div>
     </div>

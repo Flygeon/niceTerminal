@@ -83,7 +83,8 @@ export default function App() {
             <div className="empty-state">
               <p>没有活动会话</p>
               <button className="empty-new" onClick={() => void openNewTab()}>
-                + 新建标签页
+                <span className="material-symbols-rounded ms-20">add</span>
+                新建标签页
               </button>
             </div>
           ) : (
