@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { getConfig, setConfig } from "../services/config";
 import { applyTheme } from "../services/themeService";
+import { applyScheme } from "../services/scheme";
 
 export type ThemeMode = "light" | "dark";
 export type StatusBarMode = "full" | "simple" | "minimal";
@@ -10,6 +11,7 @@ const CONFIG_PREFIX = "settings";
 interface SettingsState {
   initialized: boolean;
   theme: string;
+  scheme: string;
   mode: ThemeMode;
   fontFamily: string;
   fontSize: number;
@@ -28,6 +30,7 @@ async function persist<T>(key: string, value: T): Promise<void> {
 export const useSettings = create<SettingsState>((set, get) => ({
   initialized: false,
   theme: "material",
+  scheme: "violet",
   mode: "dark",
   fontFamily: "JetBrains Mono, Consolas, monospace",
   fontSize: 14,
@@ -37,9 +40,10 @@ export const useSettings = create<SettingsState>((set, get) => ({
   shell: "",
 
   init: async () => {
-    const [theme, mode, fontFamily, fontSize, lineHeight, cursorStyle, cursorBlink, shell] =
+    const [theme, scheme, mode, fontFamily, fontSize, lineHeight, cursorStyle, cursorBlink, shell] =
       await Promise.all([
         getConfig("settings.theme", "material"),
+        getConfig("settings.scheme", "violet"),
         getConfig<ThemeMode>("settings.mode", "dark"),
         getConfig("settings.fontFamily", "JetBrains Mono, Consolas, monospace"),
         getConfig("settings.fontSize", 14),
@@ -50,6 +54,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
       ]);
     set({
       theme,
+      scheme,
       mode,
       fontFamily,
       fontSize,
@@ -61,6 +66,7 @@ export const useSettings = create<SettingsState>((set, get) => ({
     });
     document.documentElement.setAttribute("data-mode", mode);
     applyTheme(theme, mode);
+    applyScheme(scheme, mode);
   },
 
   update: async (partial) => {
@@ -77,9 +83,14 @@ export const useSettings = create<SettingsState>((set, get) => ({
       document.documentElement.setAttribute("data-mode", partial.mode);
     }
 
-    // Re-apply theme if theme or mode changed
-    if (partial.theme !== undefined || partial.mode !== undefined) {
+    // Re-apply theme + accent scheme if any of theme/scheme/mode changed
+    if (
+      partial.theme !== undefined ||
+      partial.scheme !== undefined ||
+      partial.mode !== undefined
+    ) {
       applyTheme(updated.theme, updated.mode);
+      applyScheme(updated.scheme, updated.mode);
     }
   },
 }));

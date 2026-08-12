@@ -2,7 +2,9 @@ import { useEffect, useRef, type RefObject } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { SearchAddon } from "@xterm/addon-search";
+import { WebLinksAddon } from "@xterm/addon-web-links";
 import { WebglAddon } from "@xterm/addon-webgl";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import {
   closeSession,
   onSessionExit,
@@ -11,8 +13,10 @@ import {
 } from "../services/terminal";
 import { eventStream } from "../services/eventStream";
 import { getTheme, getXtermTheme } from "../services/themeService";
+import { terminalRegistry } from "../services/terminalRegistry";
 import { useSessions } from "../stores/sessions";
 import { useSettings } from "../stores/settings";
+import { useUi } from "../stores/ui";
 
 /** Actions the surrounding UI can invoke on a live terminal instance. */
 export interface TerminalController {
@@ -67,6 +71,10 @@ export function useTerminal(
     const search = new SearchAddon();
     term.loadAddon(fit);
     term.loadAddon(search);
+    term.loadAddon(new WebLinksAddon((event, uri) => {
+      event.preventDefault();
+      void openUrl(uri);
+    }));
     term.open(el);
     fit.fit();
 
@@ -153,6 +161,7 @@ export function useTerminal(
       },
     };
     controllerRef.current = controller;
+    terminalRegistry.register(sessionId, controller);
 
     // Output frames → xterm, coalesced at ≤60fps by the EventStreamManager.
     const unsubOutput = eventStream.subscribe((sid, data) => {
@@ -176,6 +185,10 @@ export function useTerminal(
     // dies with the terminal on dispose().
     term.attachCustomKeyEventHandler((ev) => {
       if (ev.type !== "keydown") return true;
+      if (ev.ctrlKey && ev.key.toLowerCase() === "k") {
+        useUi.getState().openPalette();
+        return false;
+      }
       if (ev.ctrlKey && ev.shiftKey && ev.key.toLowerCase() === "c") {
         controller.copy();
         return false;
@@ -233,6 +246,7 @@ export function useTerminal(
     return () => {
       disposed = true;
       controllerRef.current = null;
+      terminalRegistry.unregister(sessionId);
       unsubOutput();
       unsubExit();
       unsubSettings();

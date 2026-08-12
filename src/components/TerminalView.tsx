@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import "@xterm/xterm/css/xterm.css";
 import { useTerminal } from "../hooks/useTerminal";
+import { openNewTab } from "../actions/tabs";
+import { ContextMenu, type ContextMenuItem } from "./ContextMenu";
 import type { Tab } from "../stores/sessions";
 
 interface TerminalViewProps {
   tab: Tab;
+  onOpenSettings: () => void;
 }
 
-export function TerminalView({ tab }: TerminalViewProps) {
+export function TerminalView({ tab, onOpenSettings }: TerminalViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [searchVisible, setSearchVisible] = useState(false);
   const controller = useTerminal(
@@ -19,6 +22,7 @@ export function TerminalView({ tab }: TerminalViewProps) {
 
   const [toolbarExpanded, setToolbarExpanded] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Focus the terminal textarea so keystrokes land immediately.
@@ -73,9 +77,32 @@ export function TerminalView({ tab }: TerminalViewProps) {
     }
   };
 
+  const ctrl = () => controller.current;
+
+  const menuItems: ContextMenuItem[] = [
+    { label: "复制", icon: "content_copy", shortcut: "Ctrl+Shift+C", action: () => ctrl()?.copy() },
+    { label: "粘贴", icon: "content_paste", shortcut: "Ctrl+V", action: () => ctrl()?.paste() },
+    { label: "全选", icon: "select_all", action: () => ctrl()?.term.selectAll() },
+    { separator: true, label: "" },
+    { label: "清屏", icon: "delete_sweep", action: () => ctrl()?.clear() },
+    { label: "中断当前命令", icon: "stop", shortcut: "Ctrl+C", action: () => ctrl()?.interrupt() },
+    { separator: true, label: "" },
+    { label: "新建标签页", icon: "add", shortcut: "Ctrl+T", action: () => void openNewTab() },
+    { label: "打开设置", icon: "settings", action: onOpenSettings },
+  ];
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setMenu({ x: e.clientX, y: e.clientY });
+  };
+
   return (
-    <div className="terminal-view">
+    <div className="terminal-view" onContextMenu={handleContextMenu}>
       <div className="terminal-container" ref={containerRef} />
+
+      {menu && (
+        <ContextMenu x={menu.x} y={menu.y} items={menuItems} onClose={() => setMenu(null)} />
+      )}
 
       {toolbarExpanded ? (
         <div className="terminal-toolbar">

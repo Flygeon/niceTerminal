@@ -1,4 +1,5 @@
 import { useSettings } from "../stores/settings";
+import { SCHEMES } from "../services/scheme";
 
 interface SettingsPanelProps {
   onClose: () => void;
@@ -88,6 +89,33 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                 </select>
               </div>
             </div>
+          </div>
+
+          {/* 配色 · Material You */}
+          <div className="settings-group">
+            <h3 className="settings-group-title">配色 · Material You</h3>
+            <div className="settings-row">
+              <label className="settings-label">主题色</label>
+              <div className="settings-control">
+                <div className="scheme-swatches">
+                  {SCHEMES.map((s) => (
+                    <button
+                      key={s.key}
+                      className={`scheme-swatch ${
+                        settings.scheme === s.key ? "scheme-swatch-active" : ""
+                      }`}
+                      style={{ backgroundColor: s.seed }}
+                      title={s.label}
+                      aria-label={s.label}
+                      onClick={() => void settings.update({ scheme: s.key })}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="settings-hint">
+              跟随 Material You 动态配色：选择种子色，自动生成 MD3 色调阶梯。
+            </p>
           </div>
 
           {/* 字体 */}

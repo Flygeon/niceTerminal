@@ -1,8 +1,8 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
-const appWindow = getCurrentWindow();
-
 export function TitleBar() {
+  const appWindow = getCurrentWindow();
+
   return (
     <div className="title-bar" data-tauri-drag-region>
       <div className="title-bar-left" data-tauri-drag-region>

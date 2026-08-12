@@ -4,10 +4,12 @@ import { TabBar } from "./components/TabBar";
 import { TerminalView } from "./components/TerminalView";
 import { StatusBar } from "./components/StatusBar";
 import { SettingsPanel } from "./components/SettingsPanel";
+import { CommandPalette } from "./components/CommandPalette";
 import { openNewTab } from "./actions/tabs";
 import { ensureTerminalEventBridge } from "./services/terminal";
 import { useSessions } from "./stores/sessions";
 import { useSettings } from "./stores/settings";
+import { useUi } from "./stores/ui";
 
 /**
  * Global keyboard shortcuts. When a modal (settings) is open, global
@@ -23,6 +25,10 @@ function useGlobalShortcuts(enabled: boolean) {
       if (tag === "TEXTAREA" || tag === "INPUT") return;
       if (!e.ctrlKey) return;
       switch (e.key.toLowerCase()) {
+        case "k":
+          e.preventDefault();
+          useUi.getState().openPalette();
+          break;
         case "t":
           e.preventDefault();
           void openNewTab();
@@ -43,8 +49,9 @@ function useGlobalShortcuts(enabled: boolean) {
 export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
+  const paletteOpen = useUi((s) => s.paletteOpen);
 
-  useGlobalShortcuts(!showSettings);
+  useGlobalShortcuts(!showSettings && !paletteOpen);
 
   useEffect(() => {
     let cancelled = false;
@@ -94,7 +101,10 @@ export default function App() {
                   key={tab.id}
                   className={`terminal-pane ${tab.id === activeId ? "active" : ""}`}
                 >
-                  <TerminalView tab={tab} />
+                  <TerminalView
+                    tab={tab}
+                    onOpenSettings={() => setShowSettings(true)}
+                  />
                 </div>
               ))}
             </div>
@@ -102,6 +112,9 @@ export default function App() {
       </div>
       <StatusBar onOpenSettings={() => setShowSettings(true)} />
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+      {paletteOpen && (
+        <CommandPalette onOpenSettings={() => setShowSettings(true)} />
+      )}
     </div>
   );
 }
