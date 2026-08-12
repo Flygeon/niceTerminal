@@ -18,8 +18,9 @@ function useGlobalShortcuts(enabled: boolean) {
     if (!enabled) return;
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      // Let the terminal's own textarea handle its keystrokes.
-      if (target?.tagName === "TEXTAREA") return;
+      // Let the terminal's own textarea and the search input handle their keys.
+      const tag = target?.tagName;
+      if (tag === "TEXTAREA" || tag === "INPUT") return;
       if (!e.ctrlKey) return;
       switch (e.key.toLowerCase()) {
         case "t":

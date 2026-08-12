@@ -22,14 +22,16 @@
 - ✅ Custom title bar (drag region + window controls)
 - ✅ CI pipeline producing an NSIS installer as a downloadable artifact
 - ✅ Copy (Ctrl+Shift+C) / paste (Ctrl+V), Ctrl+T new tab, Ctrl+W close tab
+- ✅ **In-terminal find (Ctrl+F)** — live highlight-as-you-type with theme-aware match colors, ⏎/⇧⏎ navigation, Esc to close
+- ✅ **Quick-action toolbar (§7.5)** — copy / paste / find / clear / interrupt (Ctrl+C), hideable to a ⋯ pill
 
 ## Deferred to later milestones (from 设计指南.md)
 
 | Item | Phase |
 |---|---|
-| Session sidebar / file tree | 1.5 |
-| In-terminal search, command guard (rm -rf / fork bomb), output-truncation status warning | 1 |
+| Command guard (rm -rf / fork bomb), output-truncation status warning | 1 |
 | Config file hot-reload via fs watch | 1 |
+| Session sidebar / file tree | 1.5 |
 | Git branch in status bar | 1.5 |
 | Split panes, tab drag-out to new windows | 1.5 |
 | SSH, keyring, encrypted command history | 1.5 |

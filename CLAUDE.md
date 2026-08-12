@@ -39,6 +39,7 @@ PTY read thread (blocking, ConPTY)  →  tokio unbounded channel  →  async emi
 8. **`cargo check` requires `dist/`** because `generate_context!()` embeds the built frontend. Run `npm run build` first.
 9. **Capabilities** (`src-tauri/capabilities/default.json`) only grant `core:default` + `store:default`. New plugins must add their permissions here.
 10. **Config** is `config.json` via `tauri-plugin-store`, keyed under `settings.*`. File-watch hot reload is a deferred milestone.
+11. **`@xterm/addon-search` 0.15 uses `decorations` (not the old `highlightAll`)** to highlight matches, and it requires `matchOverviewRuler` + `activeMatchColorOverviewRuler` in `#RRGGBB`. Colors are derived from the active theme preset in `useTerminal.ts` (`searchDecorations()`). There is no `Ctrl+F` keydown on a plain keyhandler beyond the terminal's own — it's wired via `attachCustomKeyEventHandler`.
 
 ## Design doc
 
