@@ -4,14 +4,14 @@ export function TitleBar() {
   const appWindow = getCurrentWindow();
 
   return (
-    <div className="title-bar" data-tauri-drag-region>
-      <div className="title-bar-left" data-tauri-drag-region>
+    <div className="title-bar" data-tauri-drag-region="deep">
+      <div className="title-bar-left">
         <span className="title-bar-logo">
           <span className="material-symbols-rounded ms-20">terminal</span>
         </span>
         <span className="title-bar-title">niceTerminal</span>
       </div>
-      <div className="title-bar-center" data-tauri-drag-region />
+      <div className="title-bar-center" />
       <div className="title-bar-actions">
         <button
           className="title-bar-btn minimize"

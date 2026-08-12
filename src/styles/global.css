@@ -77,7 +77,6 @@ button {
   flex-shrink: 0;
   background: var(--md-sys-color-surface-container);
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
-  -webkit-app-region: drag;
 }
 
 .title-bar-left {
@@ -102,13 +101,11 @@ button {
 
 .title-bar-center {
   flex: 2;
-  -webkit-app-region: drag;
 }
 
 .title-bar-actions {
   display: flex;
   height: 100%;
-  -webkit-app-region: no-drag;
 }
 
 .title-bar-btn {

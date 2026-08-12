@@ -105,3 +105,53 @@ export function applyScheme(schemeKey: string, mode: ThemeMode): void {
     root.style.setProperty(key, value);
   }
 }
+
+/**
+ * xterm.js palette for the "whole window follows Material You" look.
+ * Background/foreground/cursor/selection come from the applied MD3 CSS
+ * tokens; the ANSI 16 are derived from the scheme seed (hue-shifted tonal
+ * steps), so the terminal and the chrome speak one color language.
+ */
+export function schemeXtermTheme(
+  schemeKey: string,
+  mode: ThemeMode,
+): Record<string, string> {
+  const scheme = SCHEMES.find((s) => s.key === schemeKey) ?? SCHEMES[0];
+  const [h, sSeed] = hexToHsl(scheme.seed);
+  const sat = Math.min(sSeed, 62);
+  const isDark = mode === "dark";
+  const tone = (offset: number, l: number) => hslToHex(h + offset, sat, l);
+  const normalL = isDark ? 65 : 42;
+  const brightL = isDark ? 82 : 58;
+
+  const root = getComputedStyle(document.documentElement);
+  const css = (name: string, fallback: string) =>
+    root.getPropertyValue(name).trim() || fallback;
+
+  return {
+    black: tone(0, 8),
+    red: tone(0, normalL),
+    green: tone(130, normalL),
+    yellow: tone(55, normalL),
+    blue: tone(245, normalL),
+    magenta: tone(300, normalL),
+    cyan: tone(185, normalL),
+    white: tone(0, isDark ? 88 : 82),
+    brightBlack: tone(0, 28),
+    brightRed: tone(0, brightL),
+    brightGreen: tone(130, brightL),
+    brightYellow: tone(55, brightL),
+    brightBlue: tone(245, brightL),
+    brightMagenta: tone(300, brightL),
+    brightCyan: tone(185, brightL),
+    brightWhite: tone(0, isDark ? 95 : 90),
+    background: css("--md-sys-color-surface", isDark ? "#1c1b1f" : "#fef7ff"),
+    foreground: css("--md-sys-color-on-surface", isDark ? "#e6e1e5" : "#1c1b1f"),
+    cursor: css("--md-sys-color-primary", isDark ? "#cfbcff" : "#6750a4"),
+    cursorAccent: css("--md-sys-color-on-primary", isDark ? "#381e72" : "#ffffff"),
+    selectionBackground: css(
+      "--md-sys-color-primary-container",
+      isDark ? "#4f378a" : "#e9ddff",
+    ),
+  };
+}

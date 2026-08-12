@@ -11,7 +11,7 @@ import {
   writeToSession,
 } from "../services/terminal";
 import { eventStream } from "../services/eventStream";
-import { getTheme, getXtermTheme } from "../services/themeService";
+import { schemeXtermTheme } from "../services/scheme";
 import { terminalRegistry } from "../services/terminalRegistry";
 import { useSessions } from "../stores/sessions";
 import { useSettings } from "../stores/settings";
@@ -58,7 +58,7 @@ export function useTerminal(
       fontFamily: settings.fontFamily,
       fontSize: settings.fontSize,
       lineHeight: settings.lineHeight,
-      theme: getXtermTheme(settings.theme, settings.mode),
+      theme: schemeXtermTheme(settings.scheme, settings.mode),
       cursorStyle: settings.cursorStyle,
       cursorBlink: settings.cursorBlink,
       convertEol: false,
@@ -85,7 +85,7 @@ export function useTerminal(
 
     let disposed = false;
 
-    /** Theme-aware match decorations (addon-search `decorations` option). */
+    /** Theme-aware match decorations — colors follow the active MD3 scheme. */
     const searchDecorations = (): {
       matchBackground: string;
       matchBorder: string;
@@ -94,15 +94,20 @@ export function useTerminal(
       activeMatchBorder: string;
       activeMatchColorOverviewRuler: string;
     } => {
-      const s = useSettings.getState();
-      const colors = getTheme(s.theme, s.mode).colors;
+      const root = getComputedStyle(document.documentElement);
+      const read = (name: string) => root.getPropertyValue(name).trim();
+      const primary = read("--md-sys-color-primary") || "#6750a4";
+      const secondaryContainer =
+        read("--md-sys-color-secondary-container") ||
+        read("--md-sys-color-primary-container") ||
+        "#e9ddff";
       return {
-        matchBackground: colors.selection,
-        matchBorder: colors.selection,
-        matchOverviewRuler: colors.selection,
-        activeMatchBackground: colors.primary,
-        activeMatchBorder: colors.primary,
-        activeMatchColorOverviewRuler: colors.primary,
+        matchBackground: secondaryContainer,
+        matchBorder: secondaryContainer,
+        matchOverviewRuler: primary,
+        activeMatchBackground: primary,
+        activeMatchBorder: primary,
+        activeMatchColorOverviewRuler: primary,
       };
     };
 
@@ -191,9 +196,82 @@ export function useTerminal(
       }
     });
 
+    // Best-effort cwd tracking: parse `cd`-style commands from the input so
+    // the status bar shows the live directory and window history restores it.
+    let cwd =
+      useSessions.getState().tabs.find((t) => t.id === tabId)?.cwd ?? "";
+    let cmdLine = "";
+
+    const resolveWindowsPath = (base: string, target: string): string => {
+      const isAbs =
+        /^[a-zA-Z]:[\\/]/.test(target) || target.startsWith("\\\\");
+      const combined = isAbs
+        ? target
+        : (base.replace(/[\\/]+$/, "") || "C:\\") + "\\" + target;
+      const unc = combined.startsWith("\\\\");
+      const parts = combined.split(/[\\/]+/).filter(Boolean);
+      const out: string[] = [];
+      for (const part of parts) {
+        if (part === ".") continue;
+        if (part === "..") {
+          if (out.length > 1) out.pop();
+          else if (!/^[a-zA-Z]:$/.test(out[0] ?? "")) out.pop();
+        } else {
+          out.push(part);
+        }
+      }
+      let res = out.join("\\");
+      if (/^[a-zA-Z]:$/.test(out[0] ?? "")) {
+        res = out[0] + (out.length > 1 ? "\\" + out.slice(1).join("\\") : "\\");
+      } else if (unc) {
+        res = "\\\\" + res;
+      }
+      return res.replace(/[\\/]+$/, "") || "C:\\";
+    };
+
+    const stripQuotes = (s: string): string => {
+      if (
+        (s.startsWith('"') && s.endsWith('"')) ||
+        (s.startsWith("'") && s.endsWith("'"))
+      ) {
+        return s.slice(1, -1);
+      }
+      return s;
+    };
+
+    const handleCdLine = (line: string) => {
+      const m = line.trim().match(/^(?:cd|sl|set-location)\s+(.+)$/i);
+      if (!m) return;
+      const target = stripQuotes(m[1].trim());
+      if (!target) return;
+      try {
+        const resolved = resolveWindowsPath(cwd, target);
+        cwd = resolved;
+        useSessions.getState().rename(tabId, { cwd: resolved });
+      } catch {
+        // ignore malformed paths
+      }
+    };
+
+    const feedCwdTracker = (chunk: string) => {
+      for (const ch of chunk) {
+        if (ch === "\r" || ch === "\n") {
+          handleCdLine(cmdLine);
+          cmdLine = "";
+        } else if (ch === "\x03" || ch === "\x1b") {
+          cmdLine = "";
+        } else if (ch === "\x7f" || ch === "\x08") {
+          cmdLine = cmdLine.slice(0, -1);
+        } else if (ch >= " ") {
+          cmdLine += ch;
+        }
+      }
+    };
+
     // Keyboard input → PTY.
     const dataDisposable = term.onData((data) => {
       if (!disposed) void writeToSession(sessionId, data);
+      feedCwdTracker(data);
     });
 
     // Ctrl+Shift+C copy, Ctrl+V paste, Ctrl+F open search.
@@ -243,8 +321,8 @@ export function useTerminal(
         term.options.fontSize = state.fontSize;
         needsFit = true;
       }
-      if (state.theme !== prev.theme || state.mode !== prev.mode) {
-        term.options.theme = getXtermTheme(state.theme, state.mode);
+      if (state.scheme !== prev.scheme || state.mode !== prev.mode) {
+        term.options.theme = schemeXtermTheme(state.scheme, state.mode);
       }
       if (state.cursorStyle !== prev.cursorStyle) {
         term.options.cursorStyle = state.cursorStyle;

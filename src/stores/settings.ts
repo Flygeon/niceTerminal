@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { getConfig, setConfig } from "../services/config";
-import { applyTheme } from "../services/themeService";
 import { applyScheme } from "../services/scheme";
 
 export type ThemeMode = "light" | "dark";
@@ -10,7 +9,6 @@ const CONFIG_PREFIX = "settings";
 
 interface SettingsState {
   initialized: boolean;
-  theme: string;
   scheme: string;
   mode: ThemeMode;
   fontFamily: string;
@@ -29,7 +27,6 @@ async function persist<T>(key: string, value: T): Promise<void> {
 
 export const useSettings = create<SettingsState>((set, get) => ({
   initialized: false,
-  theme: "material",
   scheme: "violet",
   mode: "dark",
   fontFamily: "JetBrains Mono, Consolas, monospace",
@@ -40,9 +37,8 @@ export const useSettings = create<SettingsState>((set, get) => ({
   shell: "",
 
   init: async () => {
-    const [theme, scheme, mode, fontFamily, fontSize, lineHeight, cursorStyle, cursorBlink, shell] =
+    const [scheme, mode, fontFamily, fontSize, lineHeight, cursorStyle, cursorBlink, shell] =
       await Promise.all([
-        getConfig("settings.theme", "material"),
         getConfig("settings.scheme", "violet"),
         getConfig<ThemeMode>("settings.mode", "dark"),
         getConfig("settings.fontFamily", "JetBrains Mono, Consolas, monospace"),
@@ -53,7 +49,6 @@ export const useSettings = create<SettingsState>((set, get) => ({
         getConfig("settings.shell", ""),
       ]);
     set({
-      theme,
       scheme,
       mode,
       fontFamily,
@@ -65,32 +60,26 @@ export const useSettings = create<SettingsState>((set, get) => ({
       initialized: true,
     });
     document.documentElement.setAttribute("data-mode", mode);
-    applyTheme(theme, mode);
     applyScheme(scheme, mode);
   },
 
   update: async (partial) => {
     const updated = { ...get(), ...partial };
+
+    // Apply DOM-side theme changes BEFORE notifying subscribers, so listeners
+    // (e.g. the terminal) read the new mode/scheme colors.
+    if (partial.mode !== undefined) {
+      document.documentElement.setAttribute("data-mode", partial.mode);
+    }
+    if (partial.scheme !== undefined || partial.mode !== undefined) {
+      applyScheme(updated.scheme, updated.mode);
+    }
+
     set(partial);
 
     // Persist each changed key
     for (const [key, value] of Object.entries(partial)) {
       await persist(key, value);
-    }
-
-    // Update data-mode attribute if mode changed
-    if (partial.mode !== undefined) {
-      document.documentElement.setAttribute("data-mode", partial.mode);
-    }
-
-    // Re-apply theme + accent scheme if any of theme/scheme/mode changed
-    if (
-      partial.theme !== undefined ||
-      partial.scheme !== undefined ||
-      partial.mode !== undefined
-    ) {
-      applyTheme(updated.theme, updated.mode);
-      applyScheme(updated.scheme, updated.mode);
     }
   },
 }));

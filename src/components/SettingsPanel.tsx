@@ -8,10 +8,6 @@ interface SettingsPanelProps {
 export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const settings = useSettings();
 
-  const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    void settings.update({ theme: e.target.value });
-  };
-
   const handleModeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     void settings.update({ mode: e.target.value as "light" | "dark" });
   };
@@ -60,22 +56,6 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
           {/* 外观 */}
           <div className="settings-group">
             <h3 className="settings-group-title">外观</h3>
-            <div className="settings-row">
-              <label className="settings-label">主题</label>
-              <div className="settings-control">
-                <select
-                  className="settings-select"
-                  value={settings.theme}
-                  onChange={handleThemeChange}
-                >
-                  <option value="material">Material You</option>
-                  <option value="gruvbox">Gruvbox</option>
-                  <option value="dracula">Dracula</option>
-                  <option value="nord">Nord</option>
-                  <option value="solarized">Solarized</option>
-                </select>
-              </div>
-            </div>
             <div className="settings-row">
               <label className="settings-label">明暗模式</label>
               <div className="settings-control">

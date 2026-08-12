@@ -16,8 +16,8 @@
 - ✅ Event-driven streaming: Rust-side buffer coalesces PTY chunks into ~60fps frames → Tauri events → frontend render throttle
 - ✅ 10MB per-session output cap (truncation + session teardown)
 - ✅ Multi-tab, with sessions kept alive across tab switches (hidden panes stay mounted)
-- ✅ M3 theme system — 5 presets × light/dark, CSS-variable driven, 300ms no-flash transitions
-- ✅ Status bar with 完整 / 简洁 / 极简 density presets
+- ✅ Material You theming — the **whole window** (chrome + terminal) follows one MD3 dynamic-color scheme; pick a seed color (violet/blue/teal/green/orange/pink) and light/dark
+- ✅ Status bar with live current-directory tracking (parses `cd`), tab count, settings
 - ✅ Settings panel — theme, mode, font size/family, status-bar density, shell override — persisted to `config.json` via `tauri-plugin-store`
 - ✅ Custom title bar (drag region + window controls)
 - ✅ CI pipeline producing an NSIS installer as a downloadable artifact
